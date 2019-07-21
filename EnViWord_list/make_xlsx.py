@@ -55,7 +55,7 @@ class MakeXlsx:
             return e
 
 def main():
-    output_file_path = '/home/dohuuhung1234/test_xlsx.xlsx'
+    output_file_path = '/home/dohuuhung1234/Desktop/test_xlsx.xlsx'
     column_titles = ['.No', 'Word', 'Type', 'Meanings']
     exist_header = True
 

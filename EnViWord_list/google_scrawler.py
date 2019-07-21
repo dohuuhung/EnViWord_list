@@ -11,20 +11,17 @@ SYNONYMS_NUMS = 5
 EXAMPLES_NUMS = 3
 
 
-def en_uni(unicode_word):
-    # This function convert unicode into str type
-    return unicode_word.encode(ENCODING)
-
 def erase_tab(sentence):
     for tab in TAB_FOR_ERASE:
         sentence = sentence.replace(tab, '')
     return sentence
 
 class GoogleScrawler:
-    def __init__(self):
+    def __init__(self, word):
+        self.word = word
         self.acquirer = TokenAcquirer()
 
-    def get_info_of_word(self, word):
+    def get_info_of_word(self):
         # This function return a dict contaning information of word (raw word, word type,
         # meaning, example of word)
         # E.x: {"raw_word": "dog",
@@ -33,16 +30,16 @@ class GoogleScrawler:
         #       "examples": "I have a pretty dog"}
         try:
             word_info = {}
-            tk = self.acquirer.do(word)
-            _url = SCRAW_URL % (tk, word)
+            tk = self.acquirer.do(self.word)
+            _url = SCRAW_URL % (tk, self.word)
 
             response = requests.get(_url)
             if response.status_code != 200:
                 raise Exception("Scrawl translation from Google translate unsuccessfully!")
             raw_info = response.json()
-            word_info['raw_word'] = word
+            word_info['word'] = self.word
             word_info['word_type'] = self.get_word_type(raw_info)
-            word_info['word_meaning'] = self.get_meaning_of_word(raw_info)
+            word_info['meaning'] = self.get_meaning_of_word(raw_info)
             word_info['pronounce'] = self.get_pronounce_of_word(raw_info)
             word_info['synonyms'] = self.get_synonyms_of_word(raw_info)
             word_info['examples'] = self.get_examples_of_word(raw_info)
@@ -57,7 +54,7 @@ class GoogleScrawler:
             word_type_list = raw_info[1]
             word_types = []
             for i in word_type_list:
-                word_types.append(i[0].encode(ENCODING))
+                word_types.append(i[0])
             return ', '.join(word_types)
         except Exception as e:
             return e
@@ -70,14 +67,14 @@ class GoogleScrawler:
             word_type_list = raw_info[1]
             word_meanings = []
             for i in word_type_list:
-                word_meanings.append(en_uni(i[1][0]) + "(" + en_uni(i[0]) + ")")
+                word_meanings.append(i[1][0] + "(" + i[0] + ")")
             return ', '.join(word_meanings)
         except Exception as e:
             return e
 
     def get_pronounce_of_word(self, raw_info):
         try:
-            return en_uni(raw_info[0][1][-1])
+            return raw_info[0][1][-1]
         except Exception as e:
             return e
 
@@ -91,10 +88,10 @@ class GoogleScrawler:
                 for k in i[1][0][0]:
                     if synonums_count > SYNONYMS_NUMS:
                         break
-                    synonyms.append(en_uni(k))
+                    synonyms.append(k)
                     synonums_count += 1
                 synonyms = ', '.join(synonyms)
-                synonyms = "%s(%s)" % (en_uni(i[0]), synonyms)
+                synonyms = "%s(%s)" % (i[0], synonyms)
                 word_synonyms.append(synonyms)
             return ', '.join(word_synonyms)
         except Exception as e:
@@ -108,12 +105,12 @@ class GoogleScrawler:
             for ex in ex_list[0]:
                 if ex_count > EXAMPLES_NUMS:
                     break
-                word_examples.append(erase_tab(en_uni(ex[0])))
+                word_examples.append(erase_tab(ex[0]))
                 ex_count += 1
             return ', '.join(word_examples)
         except Exception as e:
             return e
 
 def main(word):
-    gs = GoogleScrawler()
-    return gs.get_info_of_word(word)
+    gs = GoogleScrawler(word)
+    return gs.get_info_of_word()
